@@ -1,0 +1,5 @@
+construct
+pandas
+pandas-stubs
+PySide6
+pypyodbc
