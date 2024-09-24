@@ -22,11 +22,6 @@ register_table_imgs = "M_Bilder"
 @final
 class Augias92Processor(MDBProcessor):
     @override
-    def __init__(self, input_file: str, diocese_id: str):
-        super().__init__(input_file, diocese_id)
-        self._b_ids: dict[int, str] = {}
-
-    @override
     def _extract_from_tables(self, tables: Tables) -> None | MatriculaData:
         version = self._extract_version(tables)
         if version is not None:
