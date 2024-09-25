@@ -1,5 +1,6 @@
 import re
 from abc import ABC, abstractmethod
+from typing import final
 
 from unidecode import unidecode
 
@@ -10,15 +11,23 @@ class BaseProcessor(ABC):
     def __init__(self, input_file: str, diocese_id: str):
         self.input_file = input_file
         self.diocese_id = diocese_id
-        self.data = self._extract_data()
-        self.success = True if self.data else False
+
+    @final
+    def extract(self) -> None | MatriculaData:
+        if self._proceed():
+            return self._extract_data()
+
+    @abstractmethod
+    def _proceed(self) -> bool:
+        """Whether or not to proceed with the processing using this processor"""
+        raise NotImplementedError("Subclasses must implement this method")
 
     @abstractmethod
     def _extract_data(self) -> None | MatriculaData:
         """Extract data from the input file"""
         raise NotImplementedError("Subclasses must implement this method")
 
-    def _to_ascii(self, text: str) -> str:
+    def _to_simple_ascii(self, text: str) -> str:
         # Convert to ASCII (remove accents, diacritics)
         ascii_text = unidecode(text.lower())
         # Replace non-alphanumeric characters with a hyphen

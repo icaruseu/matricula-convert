@@ -168,14 +168,18 @@ class MainWindow(QWidget):
         log.info(f"Starting conversion for file: {input_file}")
         self.progress_bar.setValue(50)  # Example of progress update
 
-        # Extract data from the input file
-        self.data = process_data(input_file, diocese_id)
+        try:
+            # Extract data from the input file
+            self.data = process_data(input_file, diocese_id)
+            # After processing, write the output files
+            self.write_output_files()
+            self.progress_bar.setValue(100)
+            log.info("Conversion complete!")
 
-        # After processing, write the output files
-        self.write_output_files()
-
-        self.progress_bar.setValue(100)
-        log.info("Conversion complete!")
+        except Exception as e:
+            self.progress_bar.setValue(100)
+            log.info("Conversion failed!")
+            QMessageBox.warning(self, "Error", str(e))
 
     def write_output_files(self):
         if not self.output_dir:

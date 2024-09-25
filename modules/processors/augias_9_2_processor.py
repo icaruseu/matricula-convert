@@ -8,7 +8,7 @@ from modules.models.image import Image
 from modules.models.matricula_data import MatriculaData
 from modules.models.parish import Parish
 from modules.models.register import Register
-from modules.processors.mdb_processor import MDBProcessor, Tables
+from modules.processors.mdb_processor import MDBProcessor
 
 log = Logger()
 
@@ -22,19 +22,33 @@ register_table_imgs = "M_Bilder"
 @final
 class Augias92Processor(MDBProcessor):
     @override
-    def _extract_from_tables(self, tables: Tables) -> None | MatriculaData:
-        version = self._extract_version(tables)
-        if version is not None:
+    def _proceed(self) -> bool:
+        table = self._get_table(version_table_name)
+        if table is None or table.empty:
+            return False
+        version_column = table[version_col_name]
+        if version_column.empty:
+            return False
+        if version_column.isin([920]).any():
+            version = version_column.iloc[-1].item()
             log.info("Augias 9.2 file detected")
             log.debug(f"Augias file version: {version}")
-        dfs = self._get_relevant_tables(tables)
-        if dfs is None:
+            return True
+        return False
+
+    @override
+    def _extract_data(self) -> None | MatriculaData:
+        parishes_df = self._get_table(parish_table_name)
+        registers_df = self._get_table(register_table_name)
+        imgs_df = self._get_table(register_table_imgs)
+        if parishes_df is None or registers_df is None or imgs_df is None:
             log.error("Could not extract relevant tables from MDB file")
             return None
-        parishes_df, registers_df, imgs_df = dfs
+
         parishes = self._extract_parishes(parishes_df, self.diocese_id)
         registers: list[Register] = []
         images: list[Image] = []
+
         for parish in parishes:
             parish_registers_df = registers_df[registers_df["B_ID"] == parish.augias_id]
             parish_registers = self._extract_registers(
@@ -58,34 +72,6 @@ class Augias92Processor(MDBProcessor):
                     register.image_dir_path = image_dir_path
         return MatriculaData(parishes=parishes, registers=registers, images=images)
 
-    def _get_relevant_tables(
-        self, tables: Tables
-    ) -> None | tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        parishes = tables.get(parish_table_name)
-        if parishes is None:
-            log.error(f"Table {parish_table_name} not found in MDB file")
-        registers = tables.get(register_table_name)
-        if registers is None:
-            log.error(f"Table {register_table_name} not found in MDB file")
-        images = tables.get(register_table_imgs)
-        if images is None:
-            log.error(f"Table {register_table_imgs} not found in MDB file")
-        if parishes is None or registers is None or images is None:
-            return None
-        else:
-            return parishes, registers, images
-
-    def _extract_version(self, tables: Tables) -> int | None:
-        table = tables.get(version_table_name)
-        if table is None or table.empty:
-            return None
-        version_column = table[version_col_name]
-        if version_column.empty:
-            return None
-        if version_column.isin([920]).any():
-            return version_column.iloc[-1].item()
-        return None
-
     def _extract_parishes(self, df: pd.DataFrame, diocese_key: str) -> list[Parish]:
         columns_to_keep = {
             "B_ID": "augias_id",
@@ -101,7 +87,7 @@ class Augias92Processor(MDBProcessor):
         }
         df = df[columns_to_keep.keys()].rename(columns=columns_to_keep)
         df = df.sort_values(by="augias_id")
-        df["identifier"] = df["title"].apply(self._to_ascii)
+        df["identifier"] = df["title"].apply(self._to_simple_ascii)
         df["parish_church"] = df["title"]
         df["date_range"] = df["date_range"].apply(self._wrap_in_p)
         df["description"] = df["description"].apply(lambda d: d if d else None)
