@@ -27,12 +27,19 @@ jobs:
         run: |
           pyinstaller --onefile --windowed --icon=resources/icon.ico --add-data "resources/icon.ico;resources" matricula-convert.py
 
+      - name: Package executable and README into zip
+        run: |
+          mkdir dist/package
+          copy dist\matricula-convert.exe dist\package\
+          copy README.md dist\package\
+          powershell -Command "Compress-Archive -Path dist/package/* -DestinationPath dist/matricula-convert.zip"
+
       - name: Create GitHub Release
         id: create_release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          artifacts: dist/matricula-convert.exe
+          artifacts: dist/matricula-convert.zip
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ contains(github.ref_name, '-') }}
