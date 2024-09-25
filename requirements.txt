@@ -4,3 +4,4 @@ pandas-stubs
 pyinstaller
 pypyodbc
 PySide6
+unidecode
