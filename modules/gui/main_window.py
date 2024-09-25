@@ -125,7 +125,7 @@ class MainWindow(QWidget):
         main_layout.addWidget(open_website_btn)  # Add website button to the layout
 
         self.setLayout(main_layout)
-        self.setWindowTitle("Data Converter")
+        self.setWindowTitle("Matricula-Convert")
 
     def browse_file(self):
         # This method is only triggered by the 'Browse' button, not during start_conversion
