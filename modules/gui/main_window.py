@@ -5,6 +5,7 @@ import sys
 import webbrowser
 
 from PySide6.QtCore import QSettings
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -30,6 +31,14 @@ import_site_url = "https://data.matricula-online.eu/en/admin/serialized/importre
 log = Logger()
 
 
+def get_root_dir() -> str:
+    root_dir = os.path.dirname(os.path.abspath(sys.modules["__main__"].__file__))
+    if not isinstance(root_dir, str):
+        log.error("Executable directory not found.")
+        exit(1)
+    return root_dir
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -37,15 +46,14 @@ class MainWindow(QWidget):
             sys, "frozen", False
         ):  # If the application is bundled using PyInstaller or similar
             main_dir = os.path.dirname(sys.executable)
+            icon_dir = str(sys._MEIPASS)
         else:
-            main_dir = os.path.dirname(
-                os.path.abspath(sys.modules["__main__"].__file__)
-            )
-        if not isinstance(main_dir, str):
-            log.error("Executable directory not found.")
-            exit(1)
+            main_dir = get_root_dir()
+            icon_dir = main_dir
 
         settings_path = os.path.join(main_dir, "matricula-convert.ini")
+        icon_path = os.path.join(icon_dir, "resources", "icon.ico")
+        self.setWindowIcon(QIcon(icon_path))
         self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
 
         self.selected_file_path = str(self.settings.value("last_file_path", ""))

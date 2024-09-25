@@ -1,0 +1,38 @@
+name: Build and Release Executable
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Matches tags like v1.0.0
+      - "v*.*.*-*" # Matches tags like v1.0.0-beta1
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --icon=resources/icon.ico --add-data "resources/icon.ico;resources" matricula-convert.py
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          artifacts: dist/matricula-convert.exe
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: ${{ contains(github.ref_name, '-') }}

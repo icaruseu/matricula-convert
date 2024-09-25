@@ -1,5 +1,6 @@
 construct
 pandas
 pandas-stubs
-PySide6
+pyinstaller
 pypyodbc
+PySide6
