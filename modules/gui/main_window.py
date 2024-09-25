@@ -1,7 +1,10 @@
 # pyright: reportUnusedCallResult=false
 import logging
+import os
+import sys
 import webbrowser
 
+from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -30,17 +33,31 @@ log = Logger()
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.selected_file_path = None  # Store the selected file path here
-        self.output_dir = None  # Store the selected output directory here
+        if getattr(
+            sys, "frozen", False
+        ):  # If the application is bundled using PyInstaller or similar
+            main_dir = os.path.dirname(sys.executable)
+        else:
+            main_dir = os.path.dirname(
+                os.path.abspath(sys.modules["__main__"].__file__)
+            )
+        if not isinstance(main_dir, str):
+            log.error("Executable directory not found.")
+            exit(1)
+
+        settings_path = os.path.join(main_dir, "matricula-convert.ini")
+        self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
+
+        self.selected_file_path = str(self.settings.value("last_file_path", ""))
+        self.output_dir = str(self.settings.value("last_output_dir", ""))
         self.data = None
         self.output_variant = OutputVariant.CSV  # Default output variant
-
         main_layout = QVBoxLayout()
 
         # Step 1 - Selecting Input File
         step1_label = QLabel("Step 1 - Select Input File")
         file_layout = QHBoxLayout()
-        self.file_input = QLineEdit()
+        self.file_input = QLineEdit(self.selected_file_path)
         browse_btn = QPushButton("Browse...")
         browse_btn.clicked.connect(self.browse_file)  # Connect button to file browsing
         file_layout.addWidget(self.file_input)
@@ -49,14 +66,16 @@ class MainWindow(QWidget):
         # Step 2 - Enter Diocese ID
         step2_label = QLabel("Step 2 - Enter Diocese ID")
         diocese_layout = QHBoxLayout()
-        self.diocese_id_input = QLineEdit()
+        self.diocese_id_input = QLineEdit(
+            str(self.settings.value("last_diocese_id", ""))
+        )
         diocese_layout.addWidget(QLabel("Diocese ID:"))
         diocese_layout.addWidget(self.diocese_id_input)
 
         # Step 3 - Selecting Output Directory
         step3_label = QLabel("Step 3 - Select Output Directory")
         output_dir_layout = QHBoxLayout()
-        self.output_dir_input = QLineEdit()
+        self.output_dir_input = QLineEdit(self.output_dir)
         output_dir_btn = QPushButton("Browse Output...")
         output_dir_btn.clicked.connect(
             self.browse_output_directory
@@ -110,6 +129,7 @@ class MainWindow(QWidget):
             self.file_input.setText(
                 file_name
             )  # Update the QLineEdit with the selected file
+            self.settings.setValue("last_file_path", file_name)
 
     def browse_output_directory(self):
         # Open a dialog to select an output directory
@@ -119,6 +139,7 @@ class MainWindow(QWidget):
             self.output_dir_input.setText(
                 output_dir
             )  # Update the QLineEdit with the output directory
+            self.settings.setValue("last_output_dir", output_dir)
 
     def start_conversion(self):
         # Ensure the input file and output directory have been selected
@@ -132,7 +153,7 @@ class MainWindow(QWidget):
         if not diocese_id:
             QMessageBox.warning(self, "Error", "Please enter the Diocese ID.")
             return
-
+        self.settings.setValue("last_diocese_id", diocese_id)
         input_file = self.selected_file_path
 
         # Add conversion logic here
