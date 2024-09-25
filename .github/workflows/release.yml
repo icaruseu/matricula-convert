@@ -43,3 +43,4 @@ jobs:
           artifacts: dist/matricula-convert.zip
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ contains(github.ref_name, '-') }}
+          generateReleaseNotes: true
