@@ -9,14 +9,14 @@ class Parish:
         title: str,
         diocese: str,
         matricula_identifier: str,
-        location: str,
+        location: None | str,
         parish_church_link: str | None,
         parish_church: str | None,
         image_url: str | None,
-        date_range: str,
+        date_range: None | str,
         description: str | None,
-        date_start: str | None,
-        date_end: str | None,
+        date_start: str | None = None,
+        date_end: str | None = None,
     ):
         self.augias_id = augias_id
         self.model = "parish.parish"
