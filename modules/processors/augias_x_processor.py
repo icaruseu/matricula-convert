@@ -15,23 +15,10 @@ log = Logger()
 @final
 class AugiasXProcessor(AugiasProcessor):
     @override
-    def _proceed(self) -> bool:
-        table = self._get_table(self.key_map.version_table_name)
-        if table is None or table.empty:
-            return False
-        version_column = table[self.key_map.version_col_name]
-        if version_column.empty:
-            return False
-        if version_column.isin([10004]).any():
-            version = version_column.iloc[-1].item()
-            log.info("Augias X file detected")
-            log.debug(f"Augias database version: {version}")
-            return True
-        return False
-
-    @override
     def _get_key_map(self) -> KeyMap:
         return KeyMap(
+            valid_versions=[10004],
+            correct_version_message="Augias X file detected",
             version_table_name="DB_VERSION",
             version_col_name="VERSION",
             parish_table_name="M_BESTAENDE",

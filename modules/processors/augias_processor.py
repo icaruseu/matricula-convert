@@ -64,6 +64,8 @@ class ImageColumns:
 
 @dataclass
 class KeyMap:
+    valid_versions: list[int]
+    correct_version_message: str
     version_table_name: str
     version_col_name: str
     parish_table_name: str
@@ -85,6 +87,22 @@ class AugiasProcessor(MDBProcessor, ABC):
     @abstractmethod
     def _get_key_map(self) -> KeyMap:
         raise NotImplementedError("Subclasses must implement this method")
+
+    @final
+    @override
+    def _proceed(self) -> bool:
+        table = self._get_table(self.key_map.version_table_name)
+        if table is None or table.empty:
+            return False
+        version_column = table[self.key_map.version_col_name]
+        if version_column.empty:
+            return False
+        if version_column.isin(self.key_map.valid_versions).any():
+            version = version_column.iloc[-1].item()
+            log.info(self.key_map.correct_version_message)
+            log.debug(f"Augias db version: {version}")
+            return True
+        return False
 
     @final
     @override
