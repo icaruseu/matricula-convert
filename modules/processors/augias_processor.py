@@ -80,8 +80,8 @@ class KeyMap:
 
 class AugiasProcessor(MDBProcessor, ABC):
     @override
-    def __init__(self, input_file: str, diocese_id: str):
-        super().__init__(input_file, diocese_id)
+    def __init__(self, input_file: str):
+        super().__init__(input_file)
         self.key_map = self._get_key_map()
 
     @abstractmethod
@@ -90,7 +90,7 @@ class AugiasProcessor(MDBProcessor, ABC):
 
     @final
     @override
-    def _proceed(self) -> bool:
+    def can_process(self) -> bool:
         table = self._get_table(self.key_map.version_table_name)
         if table is None or table.empty:
             return False
@@ -106,7 +106,7 @@ class AugiasProcessor(MDBProcessor, ABC):
 
     @final
     @override
-    def _extract_data(self) -> None | MatriculaData:
+    def try_process(self, diocese_id: str) -> None | MatriculaData:
         parishes_df = self._get_table(parish_table_name)
         registers_df = self._get_table(register_table_name)
         imgs_df = self._get_table(register_table_imgs)
@@ -114,7 +114,7 @@ class AugiasProcessor(MDBProcessor, ABC):
             log.error("Could not extract relevant tables from MDB file")
             return None
 
-        parishes = self.__extract_parishes(parishes_df, self.diocese_id)
+        parishes = self.__extract_parishes(parishes_df, diocese_id)
         registers: list[Register] = []
         images: list[Image] = []
 
@@ -123,7 +123,7 @@ class AugiasProcessor(MDBProcessor, ABC):
                 registers_df[self.key_map.register_parent_col] == parish.augias_id
             ]
             parish_registers = self.__extract_registers(
-                parish_registers_df, self.diocese_id, parish.identifier
+                parish_registers_df, diocese_id, parish.identifier
             )
             registers.extend(parish_registers)
             for register in parish_registers:
@@ -132,7 +132,7 @@ class AugiasProcessor(MDBProcessor, ABC):
                 ]
                 register_images = self.__extract_images(
                     register_imgs_df,
-                    self.diocese_id,
+                    diocese_id,
                     parish.identifier,
                     register.archival_identifier,
                 )

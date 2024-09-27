@@ -14,6 +14,8 @@ log = Logger()
 
 @final
 class AugiasXProcessor(AugiasProcessor):
+    name = "Augias X"
+
     @override
     def _get_key_map(self) -> KeyMap:
         return KeyMap(

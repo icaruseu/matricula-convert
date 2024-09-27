@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 
 from modules.gui.log_handler import QTextEditLogHandler
 from modules.logger import Logger
-from modules.processors.process import process_data
+from modules.processors.process import Processor
 from modules.writers.csv_writer import CSVWriter
 from modules.writers.write import OutputVariant
 
@@ -59,6 +59,8 @@ class MainWindow(QWidget):
         self.selected_file_path = str(self.settings.value("last_file_path", ""))
         self.output_dir = str(self.settings.value("last_output_dir", ""))
         self.data = None
+        self.processor = None
+        self._update_processor()
         self.output_variant = OutputVariant.CSV  # Default output variant
         main_layout = QVBoxLayout()
 
@@ -139,6 +141,7 @@ class MainWindow(QWidget):
                 file_name
             )  # Update the QLineEdit with the selected file
             self.settings.setValue("last_file_path", file_name)
+            self._update_processor()
 
     def browse_output_directory(self):
         start_dir = self.output_dir if self.output_dir else ""
@@ -149,6 +152,13 @@ class MainWindow(QWidget):
             self.output_dir = output_dir
             self.output_dir_input.setText(output_dir)
             self.settings.setValue("last_output_dir", output_dir)
+
+    def _update_processor(self):
+        if self.selected_file_path:
+            self.processor = Processor(self.selected_file_path)
+            log.debug(f"Using processor: {self.processor.name()}")
+        else:
+            self.processor = None
 
     def start_conversion(self):
         # Ensure the input file and output directory have been selected
@@ -170,8 +180,11 @@ class MainWindow(QWidget):
         self.progress_bar.setValue(50)  # Example of progress update
 
         try:
-            # Extract data from the input file
-            self.data = process_data(input_file, diocese_id)
+            # Use the existing processor
+            if not self.processor:
+                raise ValueError("No input file selected or processor not initialized.")
+            print(self.processor.name())
+            self.data = self.processor.extract(diocese_id)
             # After processing, write the output files
             self.write_output_files()
             self.progress_bar.setValue(100)

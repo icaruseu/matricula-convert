@@ -1,6 +1,6 @@
+import os
 import re
 from abc import ABC, abstractmethod
-from typing import final
 
 from unidecode import unidecode
 
@@ -8,22 +8,20 @@ from modules.models.matricula_data import MatriculaData
 
 
 class BaseProcessor(ABC):
-    def __init__(self, input_file: str, diocese_id: str):
-        self.input_file = input_file
-        self.diocese_id = diocese_id
+    name: str
 
-    @final
-    def extract(self) -> None | MatriculaData:
-        if self._proceed():
-            return self._extract_data()
+    def __init__(self, input_file: str):
+        self.input_file = input_file
+        if not os.path.exists(input_file):
+            raise ValueError("Input file does not exist")
 
     @abstractmethod
-    def _proceed(self) -> bool:
+    def can_process(self) -> bool:
         """Whether or not to proceed with the processing using this processor"""
         raise NotImplementedError("Subclasses must implement this method")
 
     @abstractmethod
-    def _extract_data(self) -> None | MatriculaData:
+    def try_process(self, diocese_id: str) -> None | MatriculaData:
         """Extract data from the input file"""
         raise NotImplementedError("Subclasses must implement this method")
 

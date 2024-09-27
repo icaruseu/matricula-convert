@@ -18,8 +18,8 @@ drivers = [
 
 class MDBProcessor(BaseProcessor, ABC):
     @override
-    def __init__(self, input_file: str, diocese_id: str):
-        super().__init__(input_file, diocese_id)
+    def __init__(self, input_file: str):
+        super().__init__(input_file)
         if not input_file.endswith(".mdb") and not input_file.endswith(".accdb"):
             raise ValueError("Input file must be an MS Access file (*.mdb, *.accdb)")
         self.connection = None
@@ -30,6 +30,7 @@ class MDBProcessor(BaseProcessor, ABC):
                 connection = pypyodbc.connect(connection_str)
                 log.debug(f"Connected successfully using driver: {driver}")
                 self.connection = connection
+                break
             except pypyodbc.Error as e:
                 log.debug(f"Failed to connect with driver: {driver}. Error: {e}")
         if self.connection is None:
