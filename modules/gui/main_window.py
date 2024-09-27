@@ -66,7 +66,7 @@ class MainWindow(QWidget):
         step1_label = QLabel("Step 1 - Select Input File")
         file_layout = QHBoxLayout()
         self.file_input = QLineEdit(self.selected_file_path)
-        browse_btn = QPushButton("Browse...")
+        browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_file)  # Connect button to file browsing
         file_layout.addWidget(self.file_input)
         file_layout.addWidget(browse_btn)
@@ -84,10 +84,8 @@ class MainWindow(QWidget):
         step3_label = QLabel("Step 3 - Select Output Directory")
         output_dir_layout = QHBoxLayout()
         self.output_dir_input = QLineEdit(self.output_dir)
-        output_dir_btn = QPushButton("Browse Output...")
-        output_dir_btn.clicked.connect(
-            self.browse_output_directory
-        )  # Button to select output directory
+        output_dir_btn = QPushButton("Browse")
+        output_dir_btn.clicked.connect(self.browse_output_directory)
         output_dir_layout.addWidget(self.output_dir_input)
         output_dir_layout.addWidget(output_dir_btn)
 
@@ -129,8 +127,11 @@ class MainWindow(QWidget):
 
     def browse_file(self):
         # This method is only triggered by the 'Browse' button, not during start_conversion
+        start_dir = (
+            os.path.dirname(self.selected_file_path) if self.selected_file_path else ""
+        )
         file_name, _ = QFileDialog.getOpenFileName(
-            self, "Select Input File", "", "All Files (*)"
+            self, "Select Input File", start_dir, "All Files (*)"
         )
         if file_name:
             self.selected_file_path = file_name  # Store selected file path in variable
@@ -140,13 +141,13 @@ class MainWindow(QWidget):
             self.settings.setValue("last_file_path", file_name)
 
     def browse_output_directory(self):
-        # Open a dialog to select an output directory
-        output_dir = QFileDialog.getExistingDirectory(self, "Select Output Directory")
+        start_dir = self.output_dir if self.output_dir else ""
+        output_dir = QFileDialog.getExistingDirectory(
+            self, "Select Output Directory", start_dir
+        )
         if output_dir:
-            self.output_dir = output_dir  # Store selected output directory in variable
-            self.output_dir_input.setText(
-                output_dir
-            )  # Update the QLineEdit with the output directory
+            self.output_dir = output_dir
+            self.output_dir_input.setText(output_dir)
             self.settings.setValue("last_output_dir", output_dir)
 
     def start_conversion(self):
