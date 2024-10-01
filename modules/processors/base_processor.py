@@ -1,16 +1,23 @@
 import os
 import re
 from abc import ABC, abstractmethod
+from typing import Callable
 
 from unidecode import unidecode
 
 from modules.models.matricula_data import MatriculaData
+from modules.models.percent import Percent, PercentChangeHandler
+
+type ProgressCallback = Callable[[Percent], None]
 
 
 class BaseProcessor(ABC):
     name: str
+    increment: float
 
-    def __init__(self, input_file: str):
+    def __init__(self, input_file: str, on_progress: PercentChangeHandler):
+        self.__on_progress = on_progress
+        self._percent = Percent(on_change=on_progress)
         self.input_file = input_file
         if not os.path.exists(input_file):
             raise ValueError("Input file does not exist")

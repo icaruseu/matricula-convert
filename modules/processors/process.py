@@ -1,5 +1,8 @@
+from PySide6.QtCore import QObject, Signal, Slot
+
 from modules.logger import Logger
 from modules.models.matricula_data import MatriculaData
+from modules.models.percent import Percent
 from modules.processors.augias_9_2_processor import Augias92Processor
 from modules.processors.augias_x_processor import AugiasXProcessor
 from modules.processors.base_processor import BaseProcessor
@@ -9,43 +12,60 @@ processors: list[type[BaseProcessor]] = [Augias92Processor, AugiasXProcessor]
 log = Logger()
 
 
-class Processor:
+class ProcessorWorker(QObject):
+    # Signals to communicate with the main thread
+    log_signal = Signal(str)  # Log messages
+    initialized = Signal(str)  # Processor name
+    progress = Signal(Percent)  # Processing progress
+    finished = Signal(MatriculaData)  # Processing result
+    error = Signal(str)  # Error messages
+    start_extraction = Signal(str)
+
     def __init__(self, input_file: str):
+        super().__init__()
         self.input_file = input_file
         self.processor: None | BaseProcessor = None
+        self.start_extraction.connect(self.extract)
+
+    @Slot()
+    def init(self) -> None:
         for processor_class in processors:
-            # Try to instantiate the processor
             try:
-                # Instantiate the processor
-                self.processor = processor_class(input_file)
-                log.debug(f"Trying processor: {self.processor.name}")
-                # Check if the processor can process the input file
-                if self.processor.can_process():
+                processor = processor_class(
+                    self.input_file, lambda p: self.progress.emit(p)
+                )
+                log.debug(f"Trying processor: {processor.name}")
+                if processor.can_process():
                     log.debug(
-                        f"Processor {self.processor.name} can process {input_file}"
+                        f"Processor {processor.name} can process {self.input_file}"
                     )
-                    # Found a valid processor, break the loop
+                    self.processor = processor
                     break
                 else:
                     log.debug(
-                        f"Processor {self.processor.name} cannot process {input_file}"
+                        f"Processor {processor.name} cannot process {self.input_file}"
                     )
-            # Log any errors
             except Exception as e:
-                log.debug(
-                    f"Error processing data using {processor_class.__name__}. Error: {e}"
+                log.error(
+                    f"Error processing data using {processor_class.__name__}: {e}"
                 )
         if self.processor is None:
-            raise ValueError(
+            self.error.emit(
                 "Unsupported file format or unable to create a valid processor"
             )
+        else:
+            self.initialized.emit(self.processor.name)
 
-    def name(self) -> str:
+    @Slot(str)
+    def extract(self, diocese_id: str) -> None:
         if self.processor is None:
-            raise RuntimeError("Processor is not initialized")
-        return self.processor.name
-
-    def extract(self, diocese_id: str) -> None | MatriculaData:
-        if self.processor is None:
-            raise RuntimeError("Processor is not initialized")
-        return self.processor.try_process(diocese_id)
+            error_msg = "Processor is not initialized"
+            log.error(error_msg)
+            self.error.emit(error_msg)
+        else:
+            try:
+                data = self.processor.try_process(diocese_id)
+                self.finished.emit(data)
+            except Exception as e:
+                log.error(f"Error during extraction: {e}")
+                self.error.emit(str(e))

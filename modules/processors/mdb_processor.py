@@ -5,7 +5,7 @@ import pandas as pd
 import pypyodbc
 
 from modules.logger import Logger
-from modules.processors.base_processor import BaseProcessor
+from modules.processors.base_processor import BaseProcessor, ProgressCallback
 
 pypyodbc.lowercase = False
 log = Logger()
@@ -18,8 +18,8 @@ drivers = [
 
 class MDBProcessor(BaseProcessor, ABC):
     @override
-    def __init__(self, input_file: str):
-        super().__init__(input_file)
+    def __init__(self, input_file: str, on_progress: ProgressCallback):
+        super().__init__(input_file, on_progress)
         if not input_file.endswith(".mdb") and not input_file.endswith(".accdb"):
             raise ValueError("Input file must be an MS Access file (*.mdb, *.accdb)")
         self.connection = None

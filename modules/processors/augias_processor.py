@@ -8,7 +8,9 @@ from modules.logger import Logger
 from modules.models.image import Image
 from modules.models.matricula_data import MatriculaData
 from modules.models.parish import Parish
+from modules.models.percent import Percent
 from modules.models.register import Register
+from modules.processors.base_processor import ProgressCallback
 from modules.processors.mdb_processor import MDBProcessor
 
 log = Logger()
@@ -79,10 +81,13 @@ class KeyMap:
 
 
 class AugiasProcessor(MDBProcessor, ABC):
+    increment = 1.0
+
     @override
-    def __init__(self, input_file: str):
-        super().__init__(input_file)
+    def __init__(self, input_file: str, on_progress: ProgressCallback):
+        super().__init__(input_file, on_progress)
         self.key_map = self._get_key_map()
+        self.progress = Percent()
 
     @abstractmethod
     def _get_key_map(self) -> KeyMap:
@@ -107,18 +112,30 @@ class AugiasProcessor(MDBProcessor, ABC):
     @final
     @override
     def try_process(self, diocese_id: str) -> None | MatriculaData:
+        log.info(f"Processing data for diocese: {diocese_id}")
+        log.info(f"Reading parishes in {parish_table_name}")
         parishes_df = self._get_table(parish_table_name)
+        log.info(f"Read {len(parishes_df)} parishes")
+        self._percent.value = 2
+        log.info(f"Reading registers in {register_table_name}")
         registers_df = self._get_table(register_table_name)
+        log.info(f"Read {len(registers_df)} registers")
+        self._percent.value = 5
+        log.info(f"Reading images in {register_table_imgs}")
         imgs_df = self._get_table(register_table_imgs)
+        log.info(f"Read {len(imgs_df)} images")
+        self._percent.value = 20
         if parishes_df is None or registers_df is None or imgs_df is None:
             log.error("Could not extract relevant tables from MDB file")
             return None
+        self._percent.set_steps(len(registers_df))
 
         parishes = self.__extract_parishes(parishes_df, diocese_id)
         registers: list[Register] = []
         images: list[Image] = []
 
         for parish in parishes:
+            log.info(f"Transforming registers for parish: {parish.title}")
             parish_registers_df = registers_df[
                 registers_df[self.key_map.register_parent_col] == parish.augias_id
             ]
@@ -127,6 +144,7 @@ class AugiasProcessor(MDBProcessor, ABC):
             )
             registers.extend(parish_registers)
             for register in parish_registers:
+                log.info(f"Transforming images for register: {register.title}")
                 register_imgs_df = imgs_df[
                     imgs_df[self.key_map.img_parent_col] == register.augias_id
                 ]
@@ -143,6 +161,7 @@ class AugiasProcessor(MDBProcessor, ABC):
                         first_img.file_name, ""
                     )
                     register.image_dir_path = image_dir_path
+                self._percent.increment()
         return MatriculaData(parishes=parishes, registers=registers, images=images)
 
     def __extract_parishes(self, df: pd.DataFrame, diocese_key: str) -> list[Parish]:
