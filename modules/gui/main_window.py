@@ -43,7 +43,7 @@ STEPS = [
         "Select the local directory in which the output files will be written.",
     ),
     (
-        "Start Conversion",
+        "Convert Data",
         "Start the conversion by clicking on the 'Start Conversion' button. After a short while, the files will be written to the output file.",
     ),
     (
