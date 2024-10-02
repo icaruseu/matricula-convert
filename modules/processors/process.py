@@ -2,7 +2,6 @@ from PySide6.QtCore import QObject, Signal, Slot
 
 from modules.logger import Logger
 from modules.models.matricula_data import MatriculaData
-from modules.models.percent import Percent
 from modules.processors.augias_9_2_processor import Augias92Processor
 from modules.processors.augias_x_processor import AugiasXProcessor
 from modules.processors.base_processor import BaseProcessor
@@ -13,10 +12,9 @@ log = Logger()
 
 
 class ProcessorWorker(QObject):
-    # Signals to communicate with the main thread
     log_signal = Signal(str)  # Log messages
     initialized = Signal(str)  # Processor name
-    progress = Signal(Percent)  # Processing progress
+    progress = Signal(float)  # Processing progress
     finished = Signal(MatriculaData)  # Processing result
     error = Signal(str)  # Error messages
     start_extraction = Signal(str)

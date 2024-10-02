@@ -25,7 +25,7 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --icon=resources/icon.ico --add-data "resources/icon.ico;resources" matricula-convert.py
+          pyinstaller --onefile --windowed --icon=resources/icon.ico --add-data "resources/logo.png;resources" --add-data "resources/icon.ico;resources" matricula-convert.py
 
       - name: Package executable and README into zip
         run: |
