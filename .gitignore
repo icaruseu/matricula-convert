@@ -3,3 +3,4 @@ testfiles/
 matricula-convert.ini
 build/
 dist/
+__pycache__/

@@ -13,6 +13,7 @@ class Parish:
         parish_church_link: str | None,
         parish_church: str | None,
         image_url: str | None,
+        image_source: str | None,
         date_range: None | str,
         description: str | None,
         date_start: str | None = None,
@@ -30,6 +31,7 @@ class Parish:
         self.parish_church_link = parish_church_link
         self.parish_church = parish_church
         self.image_url = image_url
+        self.image_source = image_source
         self.date_range = date_range
         self.description = description
         self.date_start = date_start

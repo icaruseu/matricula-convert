@@ -19,7 +19,7 @@ class AugiasXProcessor(AugiasProcessor):
     @override
     def _get_key_map(self) -> KeyMap:
         return KeyMap(
-            valid_versions=[10004],
+            valid_versions=[10004, 10005],
             correct_version_message="Augias X file detected",
             version_table_name="DB_VERSION",
             version_col_name="VERSION",
@@ -35,6 +35,7 @@ class AugiasXProcessor(AugiasProcessor):
                 location="B_UMFANG",
                 parish_church_link="B_IAVORGAENGER",
                 image_url="B_NACHFOLGER",
+                image_source="B_PROVENIENZ",
                 date_range="B_VORWORT",
                 description="B_BEMERKUNGEN",
             ),

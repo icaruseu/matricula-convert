@@ -29,6 +29,7 @@ class ParishColumns:
     location: str
     parish_church_link: str
     image_url: str
+    image_source: str
     date_range: str
     description: str
 
@@ -115,19 +116,19 @@ class AugiasProcessor(MDBProcessor, ABC):
         log.info(f"Processing data for diocese: {diocese_id}")
         log.info(f"Reading parishes in {parish_table_name}")
         parishes_df = self._get_table(parish_table_name)
-        log.info(f"Read {len(parishes_df)} parishes")
         self._percent.value = 2
         log.info(f"Reading registers in {register_table_name}")
         registers_df = self._get_table(register_table_name)
-        log.info(f"Read {len(registers_df)} registers")
         self._percent.value = 5
         log.info(f"Reading images in {register_table_imgs}")
         imgs_df = self._get_table(register_table_imgs)
-        log.info(f"Read {len(imgs_df)} images")
         self._percent.value = 20
         if parishes_df is None or registers_df is None or imgs_df is None:
             log.error("Could not extract relevant tables from MDB file")
             return None
+        log.info(f"Read {len(parishes_df)} parishes")
+        log.info(f"Read {len(registers_df)} registers")
+        log.info(f"Read {len(imgs_df)} images")
         self._percent.set_steps(len(registers_df))
 
         parishes = self.__extract_parishes(parishes_df, diocese_id)
@@ -184,6 +185,7 @@ class AugiasProcessor(MDBProcessor, ABC):
                 location=row["location"],
                 parish_church_link=row["parish_church_link"],
                 image_url=row["image_url"],
+                image_source=row["image_source"],
                 date_range=row["date_range"],
                 description=row["description"],
                 diocese=f'["{diocese_key}"]',

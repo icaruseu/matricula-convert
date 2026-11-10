@@ -35,6 +35,7 @@ class Augias92Processor(AugiasProcessor):
                 location="B_Umfang",
                 parish_church_link="B_IAvorgaenger",
                 image_url="B_Nachfolger",
+                image_source="B_Provenienz",
                 date_range="B_Vorwort",
                 description="B_Bemerkungen",
             ),

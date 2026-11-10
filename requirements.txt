@@ -1,6 +1,6 @@
 construct
-pandas
-pandas-stubs
+pandas<3
+pandas-stubs<3
 pyinstaller
 pypyodbc
 PySide6
