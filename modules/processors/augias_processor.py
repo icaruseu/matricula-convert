@@ -200,7 +200,7 @@ class AugiasProcessor(MDBProcessor, ABC):
         columns_to_keep = self.key_map.register_cols.dict()
         df = df[columns_to_keep.keys()].rename(columns=columns_to_keep)
         df = df.sort_values(by="identifier")
-        df["title"] = df["title"].apply(self._remove_newlines)
+        df["title"] = df["title"].apply(lambda t: self._remove_newlines(t).strip())
         df["type"] = df["title"].apply(self.__extract_types)
         df["description"] = df["description"].apply(self.__wrap_in_p)
         df["comment"] = df["comment"].apply(self.__wrap_in_p)
@@ -280,7 +280,7 @@ class AugiasProcessor(MDBProcessor, ABC):
         types: list[str] = []
         if self.__any_in_text(title, ["index", "register"]):
             types.append("Index")
-        if self.__any_in_text(title, ["sterb", "tod"]):
+        if self.__any_in_text(title, ["sterb", "tod", "beerdig"]):
             types.append("Sterben")
         if self.__any_in_text(title, ["tauf"]):
             types.append("Taufen")
